@@ -11,7 +11,7 @@ final geminiProvider = Provider<GeminiService>(
     if (apiKey == null || apiKey.isEmpty) {
       throw Exception("API Key is not set in .env file");
     }
-    return GeminiService(apiKey);
+    return GeminiService(apiKey); 
   },
 );
 
