@@ -1,4 +1,4 @@
-name: Promini APK Build
+name: Promini APK Build & Distribute
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build Promini APK
+    name: Build & Distribute Promini APK
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +34,10 @@ jobs:
       - name: Verify Flutter version
         run: flutter --version
 
+      - name: Create .env file from GitHub Secrets
+        run: |
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -52,9 +56,32 @@ jobs:
           path: output/promini.apk
           retention-days: 30
 
+      - name: Create Firebase service account file
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase-service-account.json
+
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFile: firebase-service-account.json
+          groups: testers
+          file: output/promini.apk
+          releaseNotes: |
+            Build from commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+            Triggered by: ${{ github.actor }}
+
+      - name: Cleanup sensitive files
+        if: always()
+        run: |
+          rm -f firebase-service-account.json
+          rm -f .env
+
       - name: Build info summary
         run: |
           echo "✅ Build completed successfully"
           echo "📦 APK name: promini.apk"
           echo "🔧 Flutter version: 3.27.4"
+          echo "🚀 Uploaded to Firebase App Distribution"
           echo "📁 APK size: $(du -sh output/promini.apk | cut -f1)"
