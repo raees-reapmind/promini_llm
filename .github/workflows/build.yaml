@@ -56,15 +56,11 @@ jobs:
           path: output/promini.apk
           retention-days: 30
 
-      - name: Create Firebase service account file
-        run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > firebase-service-account.json
-
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
-          serviceCredentialsFile: firebase-service-account.json
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           groups: testers
           file: output/promini.apk
           releaseNotes: |
@@ -75,7 +71,6 @@ jobs:
       - name: Cleanup sensitive files
         if: always()
         run: |
-          rm -f firebase-service-account.json
           rm -f .env
 
       - name: Build info summary
